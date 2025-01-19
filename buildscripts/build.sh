@@ -22,6 +22,11 @@ _init() {
     # Save release LDFLAGS
     LDFLAGS=$(go run buildscripts/gen-ldflags.go)
 
+    if [ -z "$JMC_VAULT_ADDRESS" ] || [ -z "$JMC_SECRET_ENGINE" ] || [ -z "$JMC_SECRET_PATHS" ]; then
+        echo "Vault configuration cannot be empty. Please check env variables."
+        exit 1;
+    fi
+
     # Extract release tag
     release_tag=$(echo $LDFLAGS | awk {'print $6'} | cut -f2 -d=)
 
@@ -41,7 +46,7 @@ _init() {
     fi
 
     # List of supported architectures
-    SUPPORTED_OSARCH='linux/amd64 linux/ppc64le windows/amd64 darwin/amd64'
+    SUPPORTED_OSARCH='linux/amd64 linux/ppc64le linux/arm64 windows/amd64 windows/arm64 darwin/amd64 darwin/arm64'
 
     ## System binaries
     CP=`which cp`
@@ -55,26 +60,32 @@ go_build() {
     os=$(echo $osarch | cut -f1 -d'/')
     arch=$(echo $osarch | cut -f2 -d'/')
     package=$(go list -f '{{.ImportPath}}')
+    repo=$(basename -s .git $(git config --get remote.origin.url))
     echo -n "-->"
-    printf "%15s:%s\n" "${osarch}" "${package}"
+    printf "%15s:%s\n" "${osarch}" "${repo}"
+
+    mkdir -p "$release_str/$os-$arch"
 
     # Release binary name
-    release_bin="$release_str/$os-$arch/$(basename $package).$release_tag"
+    release_bin="$release_str/$os-$arch/$repo.$release_tag"
     # Release binary downloadable name
-    release_real_bin="$release_str/$os-$arch/$(basename $package)"
+    release_real_bin="$release_str/$os-$arch/$repo"
 
     # Release sha1sum name
-    release_shasum="$release_str/$os-$arch/$(basename $package).${release_tag}.shasum"
+    release_shasum="$release_str/$os-$arch/$repo.${release_tag}.shasum"
     # Release sha1sum default
-    release_shasum_default="$release_str/$os-$arch/$(basename $package).shasum"
+    release_shasum_default="$release_str/$os-$arch/$repo.shasum"
 
     # Release sha256sum name
-    release_sha256sum="$release_str/$os-$arch/$(basename $package).${release_tag}.sha256sum"
+    release_sha256sum="$release_str/$os-$arch/$repo.${release_tag}.sha256sum"
     # Release sha256sum default
-    release_sha256sum_default="$release_str/$os-$arch/$(basename $package).sha256sum"
+    release_sha256sum_default="$release_str/$os-$arch/$repo.sha256sum"
 
     # Go build to build the binary.
-    CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -tags kqueue --ldflags "${LDFLAGS}" -o $release_bin
+    export CGO_ENABLED=0
+    export GOOS=$os
+    export GOARCH=$arch
+    go build -tags=kqueue -ldflags="${LDFLAGS}" -o $release_bin ## 
 
     # Create copy
     if [ $os == "windows" ]; then

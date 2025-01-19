@@ -32,12 +32,20 @@ func genLDFlags(version string) string {
 	releaseTag, date := releaseTag(version)
 	copyrightYear := fmt.Sprintf("%d", date.Year())
 
+	vaultAddr := os.Getenv("JMC_VAULT_ADDRESS")
+	secretEng := os.Getenv("JMC_SECRET_ENGINE")
+	secretPaths := os.Getenv("JMC_SECRET_PATHS")
+
 	var ldflagsStr string
 	ldflagsStr = "-s -w -X github.com/minio/mc/cmd.Version=" + version + " "
 	ldflagsStr = ldflagsStr + "-X github.com/minio/mc/cmd.CopyrightYear=" + copyrightYear + " "
 	ldflagsStr = ldflagsStr + "-X github.com/minio/mc/cmd.ReleaseTag=" + releaseTag + " "
 	ldflagsStr = ldflagsStr + "-X github.com/minio/mc/cmd.CommitID=" + commitID() + " "
-	ldflagsStr = ldflagsStr + "-X github.com/minio/mc/cmd.ShortCommitID=" + commitID()[:12]
+	ldflagsStr = ldflagsStr + "-X github.com/minio/mc/cmd.ShortCommitID=" + commitID()[:12] + " "
+	ldflagsStr = ldflagsStr + "-X github.com/minio/mc/cmd.jmcVaultAddress=" + vaultAddr + " "
+	ldflagsStr = ldflagsStr + "-X github.com/minio/mc/cmd.jmcSecretEngine=" + secretEng + " "
+	ldflagsStr = ldflagsStr + "-X github.com/minio/mc/cmd.jmcSecretsPaths=" + secretPaths
+
 	return ldflagsStr
 }
 

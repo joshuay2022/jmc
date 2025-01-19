@@ -14,6 +14,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// Copyright (c) 2025 Joshua.
 
 package cmd
 
@@ -33,8 +35,12 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-// mcCustomConfigDir contains the whole path to config dir. Only access via get/set functions.
-var mcCustomConfigDir string
+var (
+	mcCustomConfigDir string // mcCustomConfigDir contains the whole path to config dir. Only access via get/set functions.
+
+	jmcAliases   = make(map[string]aliasConfigV10)
+	jmcRequested = false
+)
 
 // setMcConfigDir - set a custom MinIO Client config folder.
 func setMcConfigDir(configDir string) {
@@ -117,8 +123,29 @@ func newMcConfig() *configV10 {
 
 // loadMcConfigCached - returns loadMcConfig with a closure for config cache.
 func loadMcConfigFactory() func() (*configV10, *probe.Error) {
+	// If config doesn't exist
+	if !isMcConfigExists() {
+		cfg := newMcConfig()
+		saveMcConfig(cfg)
+	}
+
 	// Load once and cache in a closure.
 	cfgCache, err := loadConfigV10()
+
+	if err == nil {
+		// Get from remote vault
+		if !jmcRequested {
+			aliases, perr := getRemoteConfig()
+			if perr != nil {
+				errorIf(perr, "Some error in requesting secrets.\n")
+			}
+			jmcAliases = aliases
+			jmcRequested = true
+		}
+		for alias, cfgValue := range jmcAliases {
+			cfgCache.setAlias(alias, cfgValue)
+		}
+	}
 
 	// loadMcConfig - reads configuration file and returns config.
 	return func() (*configV10, *probe.Error) {

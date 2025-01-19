@@ -1,5 +1,21 @@
 # MinIO Client Quickstart Guide
-[![Slack](https://slack.min.io/slack?type=svg)](https://slack.min.io) [![Go Report Card](https://goreportcard.com/badge/minio/mc)](https://goreportcard.com/report/minio/mc) [![Docker Pulls](https://img.shields.io/docker/pulls/minio/mc.svg?maxAge=604800)](https://hub.docker.com/r/minio/mc/) [![license](https://img.shields.io/badge/license-AGPL%20V3-blue)](https://github.com/minio/mc/blob/master/LICENSE)
+
+# Improvement
+
+On top of `mc`, this version of `jmc` adds protection of access keys and secrets. `jmc` stores keys and secrets in a remote secret vault powered by [HashiCorp Vault](https://www.vaultproject.io). Users should first deploy a hashiCorp vault and set up userpass authentication and then build `jmc` by assigning the remote vault address, secret engine and secret paths.
+
+## Usage
+
+Before building `jmc`, you should first set up the three environment variables
+```bash
+export JMC_VAULT_ADDRESS="<your vault address>"
+export JMC_SECRET_ENGINE="<your secret engine>"
+export JMC_SECRET_PATHS="<secret path 1>,<secret path 2>..."
+```
+
+Then you can use `buildscripts/build.sh` to build `jmc`.
+
+When using `jmc`, it will first find username and password of your vault in environment variables `JMC_VAULT_USERNAME` and `JMC_VAULT_PASSWORD`. If they are not provided, `jmc` asks you to enter username and password in terminal. After that, it retrieves the aliases, access keys and s3 addresses from the vault.
 
 # Documentation
 - [MC documentation](https://min.io/docs/minio/linux/reference/minio-mc.html)

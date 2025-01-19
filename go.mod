@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/cheggaaa/pb v1.0.29
 	github.com/dustin/go-humanize v1.0.1
+	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/fatih/color v1.18.0
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
